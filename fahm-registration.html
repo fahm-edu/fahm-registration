@@ -219,7 +219,7 @@ const payload=()=>({parent_name:clean(P.name),phone:dp(P.dial,P.phone),whatsapp:
 const waUrl=m=>`https://wa.me/${CFG.wa}?text=${encodeURIComponent(m)}`;
 function sentView(){const x=S.sent;return `<section class="card"><h2>تم تجهيز بيانات التسجيل</h2><div class="note">تم تجهيز بيانات التسجيل. يرجى إرسال الرسالة من خلال واتساب حتى يصل طلبكم إلى قسم التسجيل.</div>
 <p>رقم الطلب المرجعي: <b dir="ltr">${esc(x.r)}</b><br>حالة الطلب: <b>بانتظار إرسال واتساب</b></p>${x.saved?`<div class="note">تم حفظ طلبكم في نظام منصة فهم.${x.mailed?" وأُرسلت رسالة تأكيد إلى بريدكم الإلكتروني.":""}</div>`:`<div class="warn">تعذّر حفظ الطلب في النظام. أرسلوا الرسالة عبر واتساب حتى يصل طلبكم.<br><small dir="ltr">${esc(x.err)}</small></div>`}${x.saved&&!x.mailed?`<div class="warn" style="margin-top:8px">لم تُرسل رسالة التأكيد إلى البريد الإلكتروني.<br><small dir="ltr">${esc(x.merr)}</small></div>`:""}
-<div class="warn">فتح واتساب لا يعني إرسال الرسالة. اضغط زر الإرسال داخل واتساب لإتمام الطلب. إن لم يفتح واتساب، استخدم الزر أدناه أو انسخ الرسالة وأرسلها إلى +20 127 111 7716.</div>
+<p style="margin:8px 0">سيتم تحويلكم إلى واتساب تلقائيًا بعد لحظات. إن لم يحدث ذلك، اضغطوا زر «فتح محادثة واتساب».</p><div class="warn">فتح واتساب لا يعني إرسال الرسالة. اضغط زر الإرسال داخل واتساب لإتمام الطلب. إن لم يفتح واتساب، استخدم الزر أدناه أو انسخ الرسالة وأرسلها إلى +20 127 111 7716.</div>
 <div class="bar" style="margin:12px 0"><a class="btn g" style="text-align:center;text-decoration:none" href="${esc(x.u)}" target="_blank" rel="noopener">فتح محادثة واتساب</a><button class="btn s" data-go="copy">نسخ الرسالة</button></div><p style="text-align:center;margin:0 0 10px"><a href="${esc(x.d)}">فتح عبر تطبيق واتساب مباشرة</a></p>
 <pre>${esc(x.m)}</pre><button class="btn s" data-go="back5" style="width:100%;margin-top:10px">العودة لتعديل البيانات</button></section>`}
 
@@ -242,7 +242,7 @@ document.addEventListener("click",async e=>{const b=e.target.closest("button,[da
  if(g==="back"){S.step--;S.err={};view();return}
  if(g==="edit"){S.step=1;S.err={};view();return}
  if(g==="add"){S.st.push(newS());S.i=S.st.length-1;S.step=2;S.err={};view();scrollTo(0,0);return}
- if(g==="back5"){S.sent=null;S.step=5;view();return}
+ if(g==="back5"){clearTimeout(S.t);S.sent=null;S.step=5;view();return}
  if(g==="copy"){navigator.clipboard?.writeText(S.sent.m).then(()=>{b.textContent="تم النسخ"},()=>{b.textContent="تعذّر النسخ"});return}
  if(g==="send"){if(S.busy)return;
   if(!P.ok){S.err={ok:"يجب الموافقة قبل إرسال الطلب."};view();document.querySelector(".er")?.scrollIntoView({block:"center"});return}
@@ -257,7 +257,7 @@ document.addEventListener("click",async e=>{const b=e.target.closest("button,[da
    const m2=await fetch(CFG.sb.url+"/functions/v1/send-confirmation",{method:"POST",headers:{"Content-Type":"application/json",apikey:CFG.sb.key},body:JSON.stringify({ref:r}),signal:c2.signal});clearTimeout(t2);
    if(m2.ok){const j=await m2.json();mailed=j&&j.ok===true;if(!mailed)merr="الدالة ردّت بعدم الإرسال"}else{merr="HTTP "+m2.status+": "+(await m2.text()).slice(0,200)}}catch(e){merr="خطأ اتصال: "+(e&&e.name||"")}}
   if(!saved)r=ref();
-  const m=msg(r),u=waUrl(m);S.sent={r,m,u,saved,mailed,err,merr,d:`whatsapp://send?phone=${CFG.wa}&text=${encodeURIComponent(m)}`};view();location.href=u;
+  const m=msg(r),u=waUrl(m);S.sent={r,m,u,saved,mailed,err,merr,d:`whatsapp://send?phone=${CFG.wa}&text=${encodeURIComponent(m)}`};view();S.t=setTimeout(()=>{location.href=u},(saved&&mailed)?2500:12000);
   setTimeout(()=>{S.busy=false},4000)}});
 view();
 </script>
