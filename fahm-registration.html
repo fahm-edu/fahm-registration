@@ -255,7 +255,7 @@ document.addEventListener("click",async e=>{const b=e.target.closest("button,[da
   let mailed=false;
   if(saved){try{const c2=new AbortController(),t2=setTimeout(()=>c2.abort(),7000);
    const m2=await fetch(CFG.sb.url+"/functions/v1/send-confirmation",{method:"POST",headers:{"Content-Type":"application/json",apikey:CFG.sb.key},body:JSON.stringify({ref:r}),signal:c2.signal});clearTimeout(t2);
-   if(m2.ok){const j=await m2.json();mailed=j&&j.ok===true;if(!mailed)merr="الدالة ردّت بعدم الإرسال"}else{merr="HTTP "+m2.status+": "+(await m2.text()).slice(0,200)}}catch(e){merr="خطأ اتصال: "+(e&&e.name||"")}}
+   if(m2.ok){const j=await m2.json();mailed=j&&j.ok===true;if(!mailed)merr=j&&j.reason?"السبب: "+j.reason:"الدالة ردّت بعدم الإرسال"}else{merr="HTTP "+m2.status+": "+(await m2.text()).slice(0,200)}}catch(e){merr="خطأ اتصال: "+(e&&e.name||"")}}
   if(!saved)r=ref();
   const m=msg(r),u=waUrl(m);S.sent={r,m,u,saved,mailed,err,merr,d:`whatsapp://send?phone=${CFG.wa}&text=${encodeURIComponent(m)}`};view();S.t=setTimeout(()=>{location.href=u},(saved&&mailed)?2500:12000);
   setTimeout(()=>{S.busy=false},4000)}});
