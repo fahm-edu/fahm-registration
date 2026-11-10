@@ -218,7 +218,7 @@ const payload=()=>({parent_name:clean(P.name),phone:dp(P.dial,P.phone),whatsapp:
  students:S.st.map(s=>({name:clean(s.name),dob:s.dob,age:age(s.dob),gender:s.gender,country:s.country,city:clean(s.city),service:svc(s.svc).n,program:s.opt,level:s.lvl,curriculum:s.cur,stage:s.stage,grade:s.grade,year:s.year,term:s.term,enrolled:s.other,school:clean(s.school),school_country:s.schoolC,extras:exList(s),note:clean(s.enote,300)}))});
 const waUrl=m=>`https://wa.me/${CFG.wa}?text=${encodeURIComponent(m)}`;
 function sentView(){const x=S.sent;return `<section class="card"><h2>تم تجهيز بيانات التسجيل</h2><div class="note">تم تجهيز بيانات التسجيل. يرجى إرسال الرسالة من خلال واتساب حتى يصل طلبكم إلى قسم التسجيل.</div>
-<p>رقم الطلب المرجعي: <b dir="ltr">${esc(x.r)}</b><br>حالة الطلب: <b>بانتظار إرسال واتساب</b></p>${x.saved?`<div class="note">تم حفظ طلبكم في نظام منصة فهم.${x.mailed?" وأُرسلت رسالة تأكيد إلى بريدكم الإلكتروني.":""}</div>`:`<div class="warn">تعذّر حفظ الطلب في النظام. أرسلوا الرسالة عبر واتساب حتى يصل طلبكم.</div>`}
+<p>رقم الطلب المرجعي: <b dir="ltr">${esc(x.r)}</b><br>حالة الطلب: <b>بانتظار إرسال واتساب</b></p>${x.saved?`<div class="note">تم حفظ طلبكم في نظام منصة فهم.${x.mailed?" وأُرسلت رسالة تأكيد إلى بريدكم الإلكتروني.":""}</div>`:`<div class="warn">تعذّر حفظ الطلب في النظام. أرسلوا الرسالة عبر واتساب حتى يصل طلبكم.<br><small dir="ltr">${esc(x.err)}</small></div>`}${x.saved&&!x.mailed?`<div class="warn" style="margin-top:8px">لم تُرسل رسالة التأكيد إلى البريد الإلكتروني.<br><small dir="ltr">${esc(x.merr)}</small></div>`:""}
 <div class="warn">فتح واتساب لا يعني إرسال الرسالة. اضغط زر الإرسال داخل واتساب لإتمام الطلب. إن لم يفتح واتساب، استخدم الزر أدناه أو انسخ الرسالة وأرسلها إلى +20 127 111 7716.</div>
 <div class="bar" style="margin:12px 0"><a class="btn g" style="text-align:center;text-decoration:none" href="${esc(x.u)}" target="_blank" rel="noopener">فتح محادثة واتساب</a><button class="btn s" data-go="copy">نسخ الرسالة</button></div><p style="text-align:center;margin:0 0 10px"><a href="${esc(x.d)}">فتح عبر تطبيق واتساب مباشرة</a></p>
 <pre>${esc(x.m)}</pre><button class="btn s" data-go="back5" style="width:100%;margin-top:10px">العودة لتعديل البيانات</button></section>`}
@@ -248,16 +248,16 @@ document.addEventListener("click",async e=>{const b=e.target.closest("button,[da
   if(!P.ok){S.err={ok:"يجب الموافقة قبل إرسال الطلب."};view();document.querySelector(".er")?.scrollIntoView({block:"center"});return}
   for(let i=0;i<S.st.length;i++){const x=S.st[i],er=Object.keys({...v2(x),...v3(x),...v4(x)});if(er.length){S.i=i;S.step=3;S.err={...v2(x),...v3(x),...v4(x)};if(v2(x).svc||v2(x).cur||v2(x).opt||v2(x).lvl)S.step=2;view();return}}
   if(Object.keys(v1()).length){S.step=1;S.err=v1();view();return}
-  S.busy=true;view();let r="",saved=false;
+  S.busy=true;view();let r="",saved=false,err="",merr="";
   try{const c=new AbortController(),tm=setTimeout(()=>c.abort(),12000);
    const res=await fetch(CFG.sb.url+"/rest/v1/rpc/submit_registration",{method:"POST",headers:{"Content-Type":"application/json",apikey:CFG.sb.key},body:JSON.stringify({p:payload()}),signal:c.signal});clearTimeout(tm);
-   if(res.ok){r=await res.json();saved=typeof r==="string"&&r.length>5}}catch(_){}
+   if(res.ok){r=await res.json();saved=typeof r==="string"&&r.length>5;if(!saved)err="رد غير متوقع"}else{err="HTTP "+res.status+": "+(await res.text()).slice(0,220)}}catch(e){err="خطأ اتصال: "+(e&&e.name||"")}
   let mailed=false;
   if(saved){try{const c2=new AbortController(),t2=setTimeout(()=>c2.abort(),7000);
    const m2=await fetch(CFG.sb.url+"/functions/v1/send-confirmation",{method:"POST",headers:{"Content-Type":"application/json",apikey:CFG.sb.key},body:JSON.stringify({ref:r}),signal:c2.signal});clearTimeout(t2);
-   if(m2.ok){const j=await m2.json();mailed=j&&j.ok===true}}catch(_){}}
+   if(m2.ok){const j=await m2.json();mailed=j&&j.ok===true;if(!mailed)merr="الدالة ردّت بعدم الإرسال"}else{merr="HTTP "+m2.status+": "+(await m2.text()).slice(0,200)}}catch(e){merr="خطأ اتصال: "+(e&&e.name||"")}}
   if(!saved)r=ref();
-  const m=msg(r),u=waUrl(m);S.sent={r,m,u,saved,mailed,d:`whatsapp://send?phone=${CFG.wa}&text=${encodeURIComponent(m)}`};view();location.href=u;
+  const m=msg(r),u=waUrl(m);S.sent={r,m,u,saved,mailed,err,merr,d:`whatsapp://send?phone=${CFG.wa}&text=${encodeURIComponent(m)}`};view();location.href=u;
   setTimeout(()=>{S.busy=false},4000)}});
 view();
 </script>
